@@ -576,7 +576,7 @@ namespace Grand.Web.Admin.Services
             model.PaymentMethod = pm != null ? pm.FriendlyName : order.PaymentMethodSystemName;
             model.PaymentStatus = order.PaymentStatusId.GetTranslationEnum(_translationService, _workContext);
             model.PaymentStatusEnum = order.PaymentStatusId;
-            var pt = await _paymentTransactionService.GetByOrdeGuid(order.OrderGuid);
+            var pt = await _paymentTransactionService.GetOrderByGuid(order.OrderGuid);
             if (pt != null)
                 model.PaymentTransactionId = pt.Id;
 
@@ -1191,14 +1191,15 @@ namespace Grand.Web.Admin.Services
             var shoppingCartService = _serviceProvider.GetRequiredService<IShoppingCartService>();
             var inventoryManageService = _serviceProvider.GetRequiredService<IInventoryManageService>();
 
-            warnings.AddRange(await _shoppingCartValidator.GetShoppingCartItemAttributeWarnings(customer, product, new ShoppingCartItem()
-            {
+            var shoppingCartItem = new ShoppingCartItem() {
                 ShoppingCartTypeId = ShoppingCartType.ShoppingCart,
                 Quantity = quantity,
                 WarehouseId = product.WarehouseId,
                 Attributes = customattributes
-            }));
-            warnings.AddRange(_shoppingCartValidator.GetShoppingCartItemGiftVoucherWarnings(ShoppingCartType.ShoppingCart, product, customattributes));
+            };
+
+            warnings.AddRange(await _shoppingCartValidator.GetShoppingCartItemAttributeWarnings(customer, product, shoppingCartItem));
+            warnings.AddRange(await _shoppingCartValidator.GetShoppingCartItemGiftVoucherWarnings(customer, product, shoppingCartItem));
             if (warnings.Count == 0)
             {
                 //no errors
