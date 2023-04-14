@@ -9,6 +9,7 @@ using Grand.Domain.Catalog;
 using Grand.Domain.Customers;
 using Grand.Domain.Orders;
 using Grand.Infrastructure;
+using Grand.Web.Common.Controllers;
 using Grand.Web.Common.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
@@ -44,7 +45,7 @@ namespace Grand.Web.Controllers
             _translationService = translationService;
             _customerSettings = customerSettings;
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> Sample(string productId)
         {
             var product = await _productService.GetProductById(productId);
@@ -68,7 +69,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetDownload(Guid orderItemId, bool agree = false)
         {
             var orderItem = await _orderService.GetOrderItemByGuid(orderItemId);
@@ -166,7 +167,7 @@ namespace Grand.Web.Controllers
             }
             return File(memoryStream.ToArray(), "application/zip", $"{Regex.Replace(product.Name, "[^A-Za-z0-9 _]", "")}.zip");
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetLicense(Guid orderItemId)
         {
             var orderItem = await _orderService.GetOrderItemByGuid(orderItemId);
@@ -200,13 +201,16 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetFileUpload(Guid downloadId)
         {
             var download = await _downloadService.GetDownloadByGuid(downloadId);
             if (download == null)
                 return Content("Download is not available any more.");
 
+            if (_workContext.CurrentCustomer == null || download.CustomerId != _workContext.CurrentCustomer.Id)
+                return Challenge();
+            
             if (download.UseDownloadUrl)
                 return new RedirectResult(download.DownloadUrl);
 
@@ -219,7 +223,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetOrderNoteFile(string orderNoteId)
         {
             var orderNote = await _orderService.GetOrderNote(orderNoteId);
@@ -249,7 +253,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetShipmentNoteFile(string shipmentNoteId,
             [FromServices] IShipmentService shipmentService)
         {
@@ -284,7 +288,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetCustomerNoteFile(string customerNoteId,
             [FromServices] ICustomerNoteService customerNoteService)
         {
@@ -314,7 +318,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetMerchandiseReturnNoteFile(string merchandiseReturnNoteId)
         {
             var merchandiseReturnNote = await _merchandiseReturnService.GetMerchandiseReturnNote(merchandiseReturnNoteId);
@@ -344,7 +348,7 @@ namespace Grand.Web.Controllers
             var contentType = !string.IsNullOrWhiteSpace(download.ContentType) ? download.ContentType : "application/octet-stream";
             return new FileContentResult(download.DownloadBinary, contentType) { FileDownloadName = fileName + download.Extension };
         }
-
+        [HttpGet]
         public virtual async Task<IActionResult> GetDocumentFile(string documentId,
             [FromServices] IDocumentService documentService)
         {

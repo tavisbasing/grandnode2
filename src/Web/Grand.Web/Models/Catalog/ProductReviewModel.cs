@@ -10,6 +10,7 @@ namespace Grand.Web.Models.Catalog
         public int RatingSum { get; set; }
 
         public int TotalReviews { get; set; }
+        public double AvgRating { get; set; }
 
         public bool AllowCustomerReviews { get; set; }
     }
@@ -20,10 +21,12 @@ namespace Grand.Web.Models.Catalog
         {
             Items = new List<ProductReviewModel>();
             AddProductReview = new AddProductReviewModel();
+            Captcha = new CaptchaModel();
         }
         public string ProductId { get; set; }
 
         public bool CaptchaValid { get; set; }
+        public ICaptchaValidModel Captcha { get; set; }
         public string ProductName { get; set; }
 
         public string ProductSeName { get; set; }

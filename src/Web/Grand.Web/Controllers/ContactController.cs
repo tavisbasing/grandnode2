@@ -7,12 +7,13 @@ using Grand.Domain.Media;
 using Grand.Domain.Stores;
 using Grand.Infrastructure;
 using Grand.Web.Commands.Models.Contact;
+using Grand.Web.Common.Controllers;
 using Grand.Web.Common.Extensions;
 using Grand.Web.Common.Filters;
-using Grand.Web.Controllers;
 using Grand.Web.Events;
 using Grand.Web.Models.Contact;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 public class ContactController : BasePublicController
@@ -41,7 +42,9 @@ public class ContactController : BasePublicController
 
     //available even when a store is closed
     [ClosedStore(true)]
-    public virtual async Task<IActionResult> ContactUs(
+    [HttpGet]
+    [ProducesResponseType(typeof(ContactUsModel), StatusCodes.Status200OK)]
+    public virtual async Task<IActionResult> Index(
         [FromServices] StoreInformationSettings storeInformationSettings,
         [FromServices] IPageService pageService)
     {
@@ -61,10 +64,11 @@ public class ContactController : BasePublicController
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(ContactUsModel), StatusCodes.Status200OK)]
     [AutoValidateAntiforgeryToken]
     [ClosedStore(true)]
     [DenySystemAccount]
-    public virtual async Task<IActionResult> ContactUs(
+    public virtual async Task<IActionResult> Index(
         [FromServices] StoreInformationSettings storeInformationSettings,
         [FromServices] IPageService pageService,
         ContactUsModel model)
@@ -142,11 +146,8 @@ public class ContactController : BasePublicController
 
         var fileBinary = httpPostedFile.GetDownloadBits();
 
-        const string qqFileNameParameter = "qqfilename";
         var fileName = httpPostedFile.FileName;
-        if (string.IsNullOrEmpty(fileName) && form.ContainsKey(qqFileNameParameter))
-            fileName = form[qqFileNameParameter].ToString();
-        //remove path (passed in IE)
+        
         fileName = Path.GetFileName(fileName);
 
         var contentType = httpPostedFile.ContentType;
@@ -189,14 +190,15 @@ public class ContactController : BasePublicController
 
         var download = new Download {
             DownloadGuid = Guid.NewGuid(),
+            CustomerId = _workContext.CurrentCustomer.Id,
             UseDownloadUrl = false,
             DownloadUrl = "",
             DownloadBinary = fileBinary,
             ContentType = contentType,
-            //we store filename without extension for downloads
             Filename = Path.GetFileNameWithoutExtension(fileName),
             Extension = fileExtension,
-            IsNew = true
+            DownloadType = DownloadType.ContactAttribute,
+            ReferenceId = attributeId
         };
 
         await downloadService.InsertDownload(download);
